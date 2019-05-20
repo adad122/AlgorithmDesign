@@ -68,7 +68,7 @@ public:
 	int size();
 	int resize(int size, T value = T());
 	int capacity();
-	int empty();
+	bool empty();
 	int shrink_to_fit();
 
 	T& operator [] (const int index);
@@ -345,7 +345,7 @@ int DS_Vector<T>::capacity()
 }
 
 template<typename T>
-int DS_Vector<T>::empty()
+bool DS_Vector<T>::empty()
 {
 	return m_size == 0;
 }
@@ -358,7 +358,7 @@ int DS_Vector<T>::shrink_to_fit()
 
 	m_capacity = m_size;
 	T* newDatas = new T[m_capacity];
-	memcpy_s(newDatas, sizeof(T) * m_capacity, m_datas, sizeof(T) * m_size);
+	memcpy_s(newDatas, sizeof(T) * m_capacity, m_datas, sizeof(T) * m_capacity / 2);
 	m_datas = newDatas;
 
 	return m_capacity;
@@ -470,9 +470,11 @@ void DS_Vector<T>::_expand()
 	if (m_size + 1 < m_capacity)
 		return;
 
+	T* newDatas = new T[m_capacity * 2];
+	memcpy_s(newDatas, sizeof(T) * m_capacity * 2, m_datas, sizeof(T) * m_capacity);
+
 	m_capacity *= 2;
-	T* newDatas = new T[m_capacity];
-	memcpy_s(newDatas, sizeof(T) * m_capacity, m_datas, sizeof(T) * m_size);
+	delete m_datas;
 	m_datas = newDatas;
 }
 

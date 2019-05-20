@@ -69,7 +69,7 @@ public:
 	reverse_iterator rend();
 
 	int size();
-	int empty();
+	bool empty();
 
 	T& operator [] (const int index);
 	T& at(int index);
@@ -187,7 +187,7 @@ int DS_List<T>::size()
 }
 
 template<typename T>
-int DS_List<T>::empty()
+bool DS_List<T>::empty()
 {
 	return m_size == 0;
 }

@@ -62,7 +62,7 @@ int PriorityQueue::Dequeue()
 void PriorityQueue::Expand()
 {
 	int* newDatas = new int[_size * 2];
-	memcpy_s(newDatas, _size * 2 * 4, _datas, _size * 4);
+	memcpy_s(newDatas, _size * 2 * sizeof(int), _datas, _size * sizeof(int));
 	delete _datas;
 
 	_size *= 2;
