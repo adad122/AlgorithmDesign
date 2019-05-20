@@ -40,4 +40,10 @@ Algorithm Design
   
   std库List(双向链表)：https://github.com/adad122/AlgorithmDesign/tree/master/DS_List
   
+  std库Queue(循环队列)：https://github.com/adad122/AlgorithmDesign/tree/master/DS_Queue
+  
+  std库Stack(栈)：https://github.com/adad122/AlgorithmDesign/tree/master/DS_Stack
+  
   最大优先队列/最小优先队列(最大堆/最小堆): https://github.com/adad122/AlgorithmDesign/tree/master/PriorityQueue
+  
+  散列表(链接法/双重哈希法)：https://github.com/adad122/AlgorithmDesign/tree/master/HashTable
