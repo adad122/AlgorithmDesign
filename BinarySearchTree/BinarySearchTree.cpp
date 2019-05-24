@@ -58,7 +58,12 @@ BinarySearchTree::~BinarySearchTree()
 int BinarySearchTree::_height(_Node* p)
 {
 	if (p)
-		return _height(p->left) + _height(p->right) + 1;
+	{
+		int left = _height(p->left);
+		int right = _height(p->right);
+
+		return (left > right ? left : right) + 1;
+	}
 
 	return 0;
 }
@@ -71,12 +76,7 @@ int BinarySearchTree::GetHeight()
 int BinarySearchTree::_size(_Node* p)
 {
 	if (p)
-	{
-		int left = _size(p->left);
-		int right = _size(p->right);
-
-		return (left > right ? left : right) + 1;
-	}
+		return _size(p->left) + _size(p->right) + 1;
 
 	return 0;
 }
@@ -266,6 +266,9 @@ void BinarySearchTree::Delete(int data)
 
 void BinarySearchTree::_transplant(_Node * p, _Node * q)
 {
+	if (p == NULL)
+		return;
+
 	if (p->parent == NULL)
 		root = q;
 	else if (p == p->parent->left)
