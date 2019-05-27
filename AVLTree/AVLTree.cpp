@@ -30,7 +30,7 @@ public:
 	//删除结点
 	bool Delete(T x);
 	//查找是否存在给定值的结点
-	bool Contains(AvlNode<T> *t, const T x) const;
+	bool Contains(AvlNode<T> *t, const T x);
 	//中序遍历
 	void InorderTraversal(AvlNode<T> *t);
 	//前序遍历
@@ -53,9 +53,10 @@ private:
 
 	void _erase(AvlNode<T>*& t);
 	void _transplant(AvlNode<T> *p, AvlNode<T> *q);
-	AvlNode<T> * _delete(AvlNode<T> *t, T x);
 	void _updateBF(AvlNode<T> *t);
 	AvlNode<T> * Cut(AvlNode<T> * p);
+	AvlNode<T> * _search(AvlNode<T> * p, const T data);
+	void _adjust(AvlNode<T> *t);
 };
 
 template<typename T>
@@ -99,11 +100,6 @@ void AvlTree<T>::_transplant(AvlNode<T> *p, AvlNode<T> *q)
 }
 
 template<typename T>
-AvlNode<T>* AvlTree<T>::_delete(AvlNode<T>* t, T x)
-{
-}
-
-template<typename T>
 void AvlTree<T>::_updateBF(AvlNode<T>* t)
 {
 	if (t == NULL)
@@ -131,6 +127,71 @@ AvlNode<T>* AvlTree<T>::Cut(AvlNode<T>* p)
 	}
 
 	return p;
+}
+
+template<typename T>
+AvlNode<T>* AvlTree<T>::_search(AvlNode<T>* p, const T data)
+{
+	AvlNode<T>* q = p;
+	while (q && q->data != data)
+	{
+		if (q->data > data)
+			q = q->left;
+		else
+			q = q->right;
+	}
+
+	return q;
+}
+
+template<typename T>
+void AvlTree<T>::_adjust(AvlNode<T>* p)
+{
+	AvlNode<T>* q = p ? (p->left ? p->left : p->right) : NULL;
+
+	while (p && abs(p->BF) < 2)
+	{
+		q = p;
+		p = p->parent;
+	}
+
+	if (p)
+	{
+		//LLL------R
+		//    2  p
+		//  x    q
+		// x
+		if (p->BF == 2 && q->BF >= 0)
+		{
+			LL_R(q);
+		}
+		//RRR------L
+		//-2      p
+		//  x    q
+		//    x
+		else if (p->BF == -2 && q->BF <= 0)
+		{
+			RR_L(q);
+		}
+		//LLR------LR
+		//    2    p
+		//  -x     q
+		//    x
+		else if (p->BF == 2 && q->BF < 0)
+		{
+			LR_LR(q);
+		}
+		//RRL-------RL
+		//    -2     p
+		//       x   q
+		//     x
+		else if (p->BF == -2 && q->BF > 0)
+		{
+			RL_RL(q);
+		}
+
+		_updateBF(root);
+	}
 }
 
 template<typename T>
@@ -170,71 +231,101 @@ void AvlTree<T>::Insert(T x)
 	_updateBF(root);
 
 	//回溯检索最小不平衡子树
-	p = node;
-	AvlNode<T>* q = NULL;
-	while (p && abs(p->BF) < 2)
-	{
-		q = p;
-		p = p->parent;
-	}
-
-	if (p)
-	{
-		//LLL------R
-		//    2  p->parent
-		//  1    p
-		// x
-		if (p->BF == 2 && q->BF == 1)
-		{
-			LL_R(q);
-		}
-		//RRR------L
-		//-2      p->parent
-		//  -1    p
-		//    x
-		else if (p->BF == -2 && q->BF == -1)
-		{
-			RR_L(q);
-		}
-		//LLR------LR
-		//    2    p->parent
-		//  -1     p
-		//    x
-		else if (p->BF == 2 && q->BF == -1)
-		{
-			LR_LR(q);
-		}
-		//RRL-------RL
-		//    -2     p->parent
-		//       1   p
-		//     x
-		else if (p->BF == -2 && q->BF == 1)
-		{
-			RL_RL(q);
-		}
-
-		_updateBF(root);
-	}
+	p = node->parent;
+	_adjust(node->parent);
 }
 
 template<typename T>
 bool AvlTree<T>::Delete(T x)
 {
+	AvlNode<T>* node = _search(root, x);
+
+	if (node)
+	{
+		AvlNode<T>* p = NULL;
+
+		if(node->left == NULL && node->right == NULL)
+		{
+			Cut(node);
+
+			p = node->parent;
+
+			if (node == root)
+			{
+				root = NULL;
+			}
+		}
+		else if (node->left != NULL && node->right != NULL)
+		{
+			//左高找前驱
+			if (node->BF > 0)
+			{
+				AvlNode<T>* q = node->left;
+
+				while (q->right)
+				{
+					q = q->right;
+				}
+
+				p = q;
+
+				if (q->parent != node)
+				{
+					p = q->parent;
+					_transplant(q, q->left);
+					q->left = node->left;
+					node->left->parent = q;
+				}
+
+				_transplant(node, q);
+				q->right = node->right;
+				node->right->parent = q;
+			}
+			//右高找后继
+			else
+			{
+				AvlNode<T>* q = node->right;
+
+				while (q->left)
+				{
+					q = q->left;
+				}
+
+				p = q;
+
+				if (q->parent != node)
+				{
+					p = q->parent;
+					_transplant(q, q->right);
+					q->right = node->right;
+					node->right->parent = q;
+				}
+
+				_transplant(node, q);
+				q->left = node->left;
+				node->left->parent = q;
+			}
+		}
+		else
+		{
+			AvlNode<T>* q = node->left ? node->left : node->right;
+			_transplant(node, q);
+			p = q;
+		}
+
+		delete(node);
+
+		_updateBF(root);
+		_adjust(p);
+	}
+
 	return false;
 }
 
 template<typename T>
-bool AvlTree<T>::Contains(AvlNode<T>* t, const T x) const
+bool AvlTree<T>::Contains(AvlNode<T>* t, const T x)
 {
-	if (t == NULL)
-		return false;
-
-	if (t->data == x)
-		return true;
-	else if (t->data > x)
-		return Contains(t->left, x);
-	else
-		return Contains(t->right, x);
+	return _search(t, x) != NULL;
 }
 
 template<typename T>
@@ -360,6 +451,36 @@ int main()
 		avlTree.Insert(datas[i]);
 
 	avlTree.InorderTraversal(avlTree.root);
+
+	if (avlTree.Contains(avlTree.root, 4))
+	{
+		printf("4 exsit.\n");
+		avlTree.Delete(4);
+	}
+	else
+	{
+		printf("4 not exsit.\n");
+	}
+
+	avlTree.InorderTraversal(avlTree.root);
+
+	printf("\n");
+	avlTree.Delete(6);
+	avlTree.InorderTraversal(avlTree.root);
+
+	printf("\n");
+	avlTree.Delete(8);
+	avlTree.InorderTraversal(avlTree.root);
+
+	printf("\n");
+
+	avlTree.Delete(7);
+	avlTree.Delete(10);
+	avlTree.Delete(9);
+
+	avlTree.InorderTraversal(avlTree.root);
+
+	printf("\n");
 
 	return 0;
 }
