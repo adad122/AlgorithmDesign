@@ -50,6 +50,7 @@ private:
 	void _left_rotate(RBNode<T> *t);
 	void _right_rotate(RBNode<T> *t);
 	void _adjust(RBNode<T> *t);
+	void _delete_adjust(RBNode<T> *t);
 };
 
 
@@ -92,8 +93,7 @@ void RBTree<T>::_transplant(RBNode<T> *p, RBNode<T> *q)
 	else
 		p->parent->right = q;
 
-	if (q != NIL)
-		q->parent = p->parent;
+	q->parent = p->parent;
 }
 
 template<typename T>
@@ -233,6 +233,92 @@ void RBTree<T>::_adjust(RBNode<T>* t)
 
 	root->color = RB_BLACK;
 }
+//
+//(1) 每个节点或者是黑色，或者是红色。
+//(2) 根节点是黑色。
+//(3) 每个叶子节点是黑色。[注意：这里叶子节点，是指为空的叶子节点！]
+//(4) 如果一个节点是红色的，则它的子节点必须是黑色的。
+//(5) 从一个节点到该节点的子孙节点的所有路径上包含相同数目的黑节点。
+//
+template<typename T>
+void RBTree<T>::_delete_adjust(RBNode<T>* t)
+{
+	while (t != root && t->color == RB_BLACK)
+	{
+		if (t == t->parent->left)
+		{
+			RBNode<T>* p = t->parent->right;
+
+			if (p->color == RB_RED)
+			{
+				p->color = RB_BLACK;
+				t->parent->color = RB_RED;
+				_left_rotate(t->parent);
+				p = t->parent->right;
+			}
+
+			if (p->left->color == RB_BLACK && p->right->color == RB_BLACK)
+			{
+				p->color = RB_RED;
+				t = t->parent;
+			}
+			else
+			{
+				if (p->right->color == RB_BLACK)
+				{
+					p->left->color = RB_BLACK;
+					p->color = RB_RED;
+					_right_rotate(p);
+					p = t->parent->right;
+				}
+
+				p->color = t->parent->color;
+				t->parent->color = RB_BLACK;
+				p->right->color = RB_BLACK;
+				_left_rotate(t->parent);
+
+				t = root;
+			}
+		}
+		else
+		{
+			RBNode<T>* p = t->parent->left;
+
+			if (p->color == RB_RED)
+			{
+				p->color = RB_BLACK;
+				t->parent->color = RB_RED;
+				_right_rotate(t->parent);
+				p = t->parent->left;
+			}
+
+			if (p->left->color == RB_BLACK && p->right->color == RB_BLACK)
+			{
+				p->color = RB_RED;
+				t = t->parent;
+			}
+			else
+			{
+				if (p->left->color == RB_BLACK)
+				{
+					p->right->color = RB_BLACK;
+					p->color = RB_RED;
+					_left_rotate(p);
+					p = t->parent->left;
+				}
+
+				p->color = t->parent->color;
+				t->parent->color = RB_BLACK;
+				p->left->color = RB_BLACK;
+				_right_rotate(t->parent);
+
+				t = root;
+			}
+		}
+	}
+
+	t->color = RB_BLACK;
+}
 
 template<typename T>
 int RBTree<T>::GetHeight(RBNode<T>* t)
@@ -285,6 +371,62 @@ void RBTree<T>::Insert(T x)
 template<typename T>
 bool RBTree<T>::Delete(T x)
 {
+	RBNode<T>* node = _search(root, x);
+
+	if (node != NIL)
+	{
+		RBNode<T>* q = NIL;
+		RBNode<T>* p = NIL;
+
+		int origin_color = node->color;
+
+		if (node->left != NIL && node->right != NIL)
+		{
+			p = node->right;
+
+			while (p->left != NIL)
+			{
+				p = p->left;
+			}
+
+			origin_color = p->color;
+
+			q = p->right;
+
+			if (p->parent != node)
+			{
+				_transplant(p, p->right);
+				p->right = node->right;
+				node->right->parent = p;
+			}
+			else
+			{
+				q->parent = p;
+			}
+			
+			_transplant(node, p);
+			p->left = node->left;
+			node->left->parent = p;
+
+			p->color = node->color;
+		}
+		else if(node->left != NIL || node->right != NIL)
+		{
+			q = p = node->left ? node->left : node->right;
+			_transplant(node, p);
+		}
+
+		Cut(node);
+		delete node;
+
+		if (origin_color == RB_BLACK)
+		{
+			_delete_adjust(q);
+		}
+
+		return true;
+	}
+
 	return false;
 }
 
@@ -326,7 +468,18 @@ int main()
 		rbTree.Insert(datas[i]);
 
 	rbTree.InorderTraversal(rbTree.root);
+	printf("\n");
 
+	rbTree.Delete(6);
+	rbTree.InorderTraversal(rbTree.root);
+	printf("\n");
+
+	rbTree.Delete(9);
+	rbTree.InorderTraversal(rbTree.root);
+	printf("\n");
+
+	rbTree.Delete(4);
+	rbTree.InorderTraversal(rbTree.root);
 	printf("\n");
 
 	return 0;
