@@ -1,4 +1,4 @@
-// RedBlackTree.cpp : �������̨Ӧ�ó������ڵ㡣
+﻿// RedBlackTree.cpp : 定义控制台应用程序的入口点。
 //
 
 #include "stdafx.h"
@@ -8,7 +8,7 @@
 #define RB_RED 0
 #define RB_BLACK 1
 
-//��������
+//红黑树结点
 template <typename T>
 struct RBNode
 {
@@ -16,7 +16,7 @@ struct RBNode
 	RBNode<T> *left;
 	RBNode<T> *right;
 	RBNode<T> *parent;
-	int color; //��ɫ
+	int color; //颜色
 
 	RBNode<T>(const T theData, RBNode<T>* nil) : data(theData), left(nil), right(nil), parent(nil), color(RB_RED) {}
 };
@@ -30,18 +30,18 @@ public:
 	RBTree<T>();
 	~RBTree<T>();
 	RBNode<T> *root;
-	//������
+	//插入结点
 	void Insert(T x);
-	//ɾ�����
+	//删除结点
 	bool Delete(T x);
-	//�����Ƿ���ڸ���ֵ�Ľ��
+	//查找是否存在给定值的结点
 	bool Contains(RBNode<T> *t, const T x);
-	//�������
+	//中序遍历
 	void InorderTraversal(RBNode<T> *t);
-	//ǰ�����
+	//前序遍历
 	void PreorderTraversal(RBNode<T> *t);
 private:
-	//�����ĸ߶�
+	//求树的高度
 	int GetHeight(RBNode<T> *t);
 	void _erase(RBNode<T>*& t);
 	void _transplant(RBNode<T> *p, RBNode<T> *q);
@@ -170,16 +170,26 @@ void RBTree<T>::_right_rotate(RBNode<T>* t)
 	p->right = t;
 	t->parent = p;
 }
-
+//
+//(1) 每个节点或者是黑色，或者是红色。
+//(2) 根节点是黑色。
+//(3) 每个叶子节点是黑色。[注意：这里叶子节点，是指为空的叶子节点！]
+//(4) 如果一个节点是红色的，则它的子节点必须是黑色的。
+//(5) 从一个节点到该节点的子孙节点的所有路径上包含相同数目的黑节点。
+//
 template<typename T>
 void RBTree<T>::_adjust(RBNode<T>* t)
 {
 	while (t->parent->color == RB_RED)
 	{
-		// ��������
+		// 父左&&叔右
 		if (t->parent == t->parent->parent->left)
 		{
-			//�������
+			//1. 父红&&叔红
+			//父黑
+			//叔黑
+			//爷红
+			//观察点上浮至爷节点
 			if (t->parent->parent->right->color == RB_RED)
 			{
 				t->parent->color = RB_BLACK;
@@ -189,23 +199,32 @@ void RBTree<T>::_adjust(RBNode<T>* t)
 			}
 			else if (t->parent != NIL && t->parent->parent != NIL)
 			{
-				//�������
-				//��λ�ڸ��ұߣ�����
+				//2. 父红叔黑&&子位于父右边
+				//观察点上浮
+				//观察点左旋
 				if (t == t->parent->right)
 				{
 					t = t->parent;
 					_left_rotate(t);
 				}
 
+				//3. 父红叔黑&&子位于父左边
+				//父黑
+				//爷红
+				//爷右旋
 				t->parent->color = RB_BLACK;
 				t->parent->parent->color = RB_RED;
 				_right_rotate(t->parent->parent);
 			}
 		}
-		// ��������
+		// 父右&&叔左
 		else
 		{
-			//�������
+			//1. 父红&&叔红
+			//父黑
+			//叔黑
+			//爷红
+			//观察点上浮到爷节点
 			if (t->parent->parent->left->color == RB_RED)
 			{
 				t->parent->color = RB_BLACK;
@@ -216,14 +235,19 @@ void RBTree<T>::_adjust(RBNode<T>* t)
 			else if(t->parent != NIL && t->parent->parent != NIL)
 			{
 
-				//�������
-				//��λ�ڸ���ߣ�����
+				//2. 父红叔黑&&子位于父左边
+				//观察点上浮
+				//观察点右旋
 				if (t == t->parent->left)
 				{
 					t = t->parent;
 					_right_rotate(t);
 				}
 
+				//3. 父红叔黑&&子位于父右边
+				//父黑
+				//爷红
+				//爷左旋
 				t->parent->color = RB_BLACK;
 				t->parent->parent->color = RB_RED;
 				_left_rotate(t->parent->parent);
@@ -233,22 +257,21 @@ void RBTree<T>::_adjust(RBNode<T>* t)
 
 	root->color = RB_BLACK;
 }
-//
-//(1) ÿ���ڵ�����Ǻ�ɫ�������Ǻ�ɫ��
-//(2) ���ڵ��Ǻ�ɫ��
-//(3) ÿ��Ҷ�ӽڵ��Ǻ�ɫ��[ע�⣺����Ҷ�ӽڵ㣬��ָΪ�յ�Ҷ�ӽڵ㣡]
-//(4) ���һ���ڵ��Ǻ�ɫ�ģ��������ӽڵ�����Ǻ�ɫ�ġ�
-//(5) ��һ���ڵ㵽�ýڵ������ڵ������·���ϰ�����ͬ��Ŀ�ĺڽڵ㡣
-//
+
 template<typename T>
 void RBTree<T>::_delete_adjust(RBNode<T>* t)
 {
 	while (t != root && t->color == RB_BLACK)
 	{
+		//位于左边
 		if (t == t->parent->left)
 		{
 			RBNode<T>* p = t->parent->right;
-
+			//1. 兄弟红
+			//兄黑
+			//父红
+			//父左旋
+			//重定位新兄弟
 			if (p->color == RB_RED)
 			{
 				p->color = RB_BLACK;
@@ -257,6 +280,9 @@ void RBTree<T>::_delete_adjust(RBNode<T>* t)
 				p = t->parent->right;
 			}
 
+			//2. 兄弟黑&&兄弟左孩黑&&兄弟右孩黑
+			//兄弟红
+			//观察点上浮
 			if (p->left->color == RB_BLACK && p->right->color == RB_BLACK)
 			{
 				p->color = RB_RED;
@@ -264,6 +290,11 @@ void RBTree<T>::_delete_adjust(RBNode<T>* t)
 			}
 			else
 			{
+				//3. 兄弟黑&&兄弟左孩红&&兄弟右孩黑
+				//兄弟左孩黑
+				//兄弟红
+				//兄弟右旋
+				//重新定位新兄弟
 				if (p->right->color == RB_BLACK)
 				{
 					p->left->color = RB_BLACK;
@@ -272,6 +303,12 @@ void RBTree<T>::_delete_adjust(RBNode<T>* t)
 					p = t->parent->right;
 				}
 
+				//4. 兄弟黑&&兄弟右孩红
+				//兄弟染父色
+				//父黑
+				//右孩黑
+				//父左旋
+				//所有操作结束
 				p->color = t->parent->color;
 				t->parent->color = RB_BLACK;
 				p->right->color = RB_BLACK;
@@ -280,10 +317,15 @@ void RBTree<T>::_delete_adjust(RBNode<T>* t)
 				t = root;
 			}
 		}
+		//位于右边
 		else
 		{
 			RBNode<T>* p = t->parent->left;
-
+			//1. 兄弟红
+			//兄黑
+			//父红
+			//父右旋
+			//重定位新兄弟
 			if (p->color == RB_RED)
 			{
 				p->color = RB_BLACK;
@@ -291,7 +333,9 @@ void RBTree<T>::_delete_adjust(RBNode<T>* t)
 				_right_rotate(t->parent);
 				p = t->parent->left;
 			}
-
+			//2. 兄弟黑&&兄弟左孩黑&&兄弟右孩黑
+			//兄弟红
+			//观察点上浮
 			if (p->left->color == RB_BLACK && p->right->color == RB_BLACK)
 			{
 				p->color = RB_RED;
@@ -299,6 +343,11 @@ void RBTree<T>::_delete_adjust(RBNode<T>* t)
 			}
 			else
 			{
+				//3. 兄弟黑&&兄弟右孩红&&兄弟左孩黑
+				//兄弟右孩黑
+				//兄弟红
+				//兄弟左旋
+				//重新定位新兄弟
 				if (p->left->color == RB_BLACK)
 				{
 					p->right->color = RB_BLACK;
@@ -307,6 +356,12 @@ void RBTree<T>::_delete_adjust(RBNode<T>* t)
 					p = t->parent->left;
 				}
 
+				//4. 兄弟黑&&兄弟左孩红
+				//兄弟染父色
+				//父黑
+				//左孩黑
+				//父右旋
+				//所有操作结束
 				p->color = t->parent->color;
 				t->parent->color = RB_BLACK;
 				p->left->color = RB_BLACK;
