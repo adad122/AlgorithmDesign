@@ -163,7 +163,7 @@ void AvlTree<T>::_adjust(AvlNode<T>* p)
 		// x
 		if (p->BF == 2 && q->BF >= 0)
 		{
-			LL_R(q);
+			LL_R(p);
 		}
 		//RRR------L
 		//-2      p
@@ -171,7 +171,7 @@ void AvlTree<T>::_adjust(AvlNode<T>* p)
 		//    x
 		else if (p->BF == -2 && q->BF <= 0)
 		{
-			RR_L(q);
+			RR_L(p);
 		}
 		//LLR------LR
 		//    2    p
@@ -179,7 +179,7 @@ void AvlTree<T>::_adjust(AvlNode<T>* p)
 		//    x
 		else if (p->BF == 2 && q->BF < 0)
 		{
-			LR_LR(q);
+			LR_LR(p);
 		}
 		//RRL-------RL
 		//    -2     p
@@ -187,7 +187,7 @@ void AvlTree<T>::_adjust(AvlNode<T>* p)
 		//     x
 		else if (p->BF == -2 && q->BF > 0)
 		{
-			RL_RL(q);
+			RL_RL(p);
 		}
 
 		_updateBF(root);
@@ -391,53 +391,49 @@ int AvlTree<T>::GetHeight(AvlNode<T>* t)
 template<typename T>
 AvlNode<T>* AvlTree<T>::LL_R(AvlNode<T>* t)
 {
-	AvlNode<T>* p = t->parent;
-	Cut(t);
+	AvlNode<T>* left = t->left;
 
-	_transplant(p, t);
+	_transplant(t, left);
 	
-	if (t->right)
-	{
-		p->left = t->right;
-		t->right->parent = p;
-	}
-	
-	t->right = p;
-	p->parent = t;
+	t->left = left->right;
 
-	return t;
+	if (left->right)
+		left->right->parent = t;
+	
+	left->right = t;
+	t->parent = left;
+
+	return left;
 }
 
 template<typename T>
 AvlNode<T>* AvlTree<T>::RR_L(AvlNode<T>* t)
 {
-	AvlNode<T>* p = t->parent;
-	Cut(t);
-
-	_transplant(p, t);
-
-	if (t->left)
-	{
-		p->right = t->left;
-		t->left->parent = p;
-	}
+	AvlNode<T>* right = t->right;
 	
-	t->left = p;
-	p->parent = t;
+	_transplant(t, right);
 
-	return t;
+	t->right = right->left;
+
+	if (right->left)
+		right->left->parent = t;
+	
+	right->left = t;
+	t->parent = right;
+
+	return right;
 }
 
 template<typename T>
 AvlNode<T>* AvlTree<T>::RL_RL(AvlNode<T>* t)
 {
-	return RR_L(LL_R(t->left));
+	return RR_L(LL_R(t->right)->parent);
 }
 
 template<typename T>
 AvlNode<T>* AvlTree<T>::LR_LR(AvlNode<T>* t)
 {
-	return LL_R(RR_L(t->right));
+	return LL_R(RR_L(t->left)->parent);
 }
 
 //{3, 2, 1, 4, 5, 6, 10, 9, 8, 7}
@@ -451,6 +447,8 @@ int main()
 		avlTree.Insert(datas[i]);
 
 	avlTree.InorderTraversal(avlTree.root);
+
+	printf("\n");
 
 	if (avlTree.Contains(avlTree.root, 4))
 	{

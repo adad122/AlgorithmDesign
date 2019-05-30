@@ -30,7 +30,7 @@ void RadixSort(int* datas, int length, int bit)
 		int index = 0;
 		for (int j = 0; j < 10; ++j)
 		{
-			for (int k = 0; k < buckets[j].size(); ++k)
+			for (unsigned int k = 0; k < buckets[j].size(); ++k)
 			{
 				datas[index++] = buckets[j][k];
 			}
