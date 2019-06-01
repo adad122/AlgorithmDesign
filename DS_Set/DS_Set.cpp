@@ -1,4 +1,4 @@
-// DS_Set.cpp : ∂®“Âøÿ÷∆Ã®”¶”√≥Ã–Úµƒ»Îø⁄µ„°£
+Ôªø// DS_Set.cpp : ÂÆö‰πâÊéßÂà∂Âè∞Â∫îÁî®Á®ãÂ∫èÁöÑÂÖ•Âè£ÁÇπ„ÄÇ
 //
 
 #include "stdafx.h"
@@ -8,7 +8,7 @@
 #define RB_RED 0
 #define RB_BLACK 1
 
-//∫Ï∫⁄ ˜Ω·µ„
+//Á∫¢ÈªëÊ†ëÁªìÁÇπ
 template <typename T>
 struct SET_NODE
 {
@@ -16,7 +16,7 @@ struct SET_NODE
 	SET_NODE<T> *left;
 	SET_NODE<T> *right;
 	SET_NODE<T> *parent;
-	int color; //—’…´
+	int color; //È¢úËâ≤
 
 	SET_NODE<T>(const T theData, SET_NODE<T>* nil) : data(theData), left(nil), right(nil), parent(nil), color(RB_RED) {}
 };
@@ -35,8 +35,8 @@ public:
 		template <typename T>
 		friend class DS_Set;
 
-		DS_Set* p; //÷∏œÚµƒDS_Set
-		int index; //µ±«∞±Ì æµƒDS_Set÷–µƒΩ⁄µ„
+		DS_Set<T>* p; //ÊåáÂêëÁöÑDS_Set
+		SET_NODE<T> * cur; //ÂΩìÂâçË°®Á§∫ÁöÑDS_Set‰∏≠ÁöÑËäÇÁÇπ
 
 	public:
 		iterator();
@@ -57,8 +57,8 @@ public:
 		template <typename T>
 		friend class DS_Set;
 
-		DS_Set* p; //÷∏œÚµƒDS_Set
-		int index; //µ±«∞±Ì æµƒDS_Set÷–µƒΩ⁄µ„
+		DS_Set<T>* p; //ÊåáÂêëÁöÑDS_Set
+		SET_NODE<T> * cur; //ÂΩìÂâçË°®Á§∫ÁöÑDS_Set‰∏≠ÁöÑËäÇÁÇπ
 
 	public:
 		reverse_iterator();
@@ -84,7 +84,7 @@ public:
 	int size();
 	bool empty();
 
-	iterator find(const T& val) const;
+	iterator find(const T& val);
 
 	iterator insert(const T& data);
 	iterator erase(const T& val);
@@ -95,14 +95,14 @@ protected:
 	SET_NODE<T> *root;
 
 	void _copy(const DS_Set& that);
-	SET_NODE<T> * _copy(SET_NODE<T> *p, SET_NODE<T> *q);
+	SET_NODE<T> * _copy(SET_NODE<T> *p, SET_NODE<T> *q, SET_NODE<T>* thatNIL);
 
 	int _getHeight(SET_NODE<T> *t);
 	int _getSize(SET_NODE<T> *t);
 	void _erase(SET_NODE<T>*& t);
 	void _transplant(SET_NODE<T> *p, SET_NODE<T> *q);
 	SET_NODE<T> * Cut(SET_NODE<T> * p);
-	SET_NODE<T> * _search(SET_NODE<T> * p, const T data);
+	SET_NODE<T> * _search(SET_NODE<T> * p, const T& data);
 	void _left_rotate(SET_NODE<T> *t);
 	void _right_rotate(SET_NODE<T> *t);
 	void _adjust(SET_NODE<T> *t);
@@ -124,6 +124,8 @@ DS_Set<T>::DS_Set()
 template<typename T>
 DS_Set<T>::DS_Set(const DS_Set & that)
 {
+	NIL = new SET_NODE<T>(T(), NULL);
+	NIL->color = RB_BLACK;
 	_copy(that);
 }
 
@@ -148,25 +150,37 @@ DS_Set<T>::~DS_Set()
 template<typename T>
 typename DS_Set<T>::iterator DS_Set<T>::begin()
 {
-	return iterator();
+	iterator it;
+	it.p = this;
+	it.cur = _minimum(root);
+	return it;
 }
 
 template<typename T>
 typename DS_Set<T>::iterator DS_Set<T>::end()
 {
-	return iterator();
+	iterator it;
+	it.p = this;
+	it.cur = NULL;
+	return it;
 }
 
 template<typename T>
 typename DS_Set<T>::reverse_iterator DS_Set<T>::rbegin()
 {
-	return reverse_iterator();
+	iterator it;
+	it.p = this;
+	it.cur = _maximum(root);
+	return it;
 }
 
 template<typename T>
 typename DS_Set<T>::reverse_iterator DS_Set<T>::rend()
 {
-	return reverse_iterator();
+	iterator it;
+	it.p = this;
+	it.cur = NULL;
+	return it;
 }
 
 template<typename T>
@@ -182,9 +196,14 @@ bool DS_Set<T>::empty()
 }
 
 template<typename T>
-typename DS_Set<T>::iterator DS_Set<T>::find(const T & val) const
+typename DS_Set<T>::iterator DS_Set<T>::find(const T & val)
 {
-	return iterator();
+	SET_NODE<T>* p = _search(root, val);
+
+	iterator it;
+	it.p = this;
+	it.cur = p == NIL ? NULL : p;
+	return it;
 }
 
 template<typename T>
@@ -202,7 +221,10 @@ typename DS_Set<T>::iterator DS_Set<T>::insert(const T & data)
 			p = p->left;
 		else
 		{
-			return iterator();
+			iterator it;
+			it.p = this;
+			it.cur = p;
+			return it;
 		}
 	}
 
@@ -220,16 +242,21 @@ typename DS_Set<T>::iterator DS_Set<T>::insert(const T & data)
 	node->parent = q;
 
 	_adjust(node);
+
+	iterator it;
+	it.p = this;
+	it.cur = node;
+	return it;
 }
 
 template<typename T>
 typename DS_Set<T>::iterator DS_Set<T>::erase(const T & val)
 {
-	SET_NODE<T>* p = _search(val);
+	SET_NODE<T>* p = _search(root, val);
 
 	if (p == NIL)
 	{
-		return iterator();
+		return end();
 	}
 
 	SET_NODE<T>* q = NIL;
@@ -275,7 +302,10 @@ typename DS_Set<T>::iterator DS_Set<T>::erase(const T & val)
 	if (origin_color == RB_BLACK)
 		_delete_adjust(q);
 
-	return iterator();
+	iterator it;
+	it.p = this;
+	it.cur = q;
+	return it;
 }
 
 template<typename T>
@@ -287,21 +317,24 @@ void DS_Set<T>::clear()
 template<typename T>
 void DS_Set<T>::_copy(const DS_Set & that)
 {
-	root = new SET_NODE<T>(that->root->data, NIL);
-	root->left = _copy(that->root->left, root);
-	root->right = _copy(that->root->right, root);
+	root = new SET_NODE<T>(that.root->data, NIL);
+	root->left = _copy(that.root->left, root, that.NIL);
+	root->right = _copy(that.root->right, root, that.NIL);
 }
 
 template<typename T>
-typename SET_NODE<T>* DS_Set<T>::_copy(SET_NODE<T>* p, SET_NODE<T>* q)
+typename SET_NODE<T>* DS_Set<T>::_copy(SET_NODE<T>* p, SET_NODE<T>* q, SET_NODE<T>* thatNIL)
 {
-	if (p != NIL)
+	if (p != thatNIL)
 	{
 		SET_NODE<T>* node = new SET_NODE<T>(p->data, NIL);
-		node->left = _copy(p->left, node);
-		node->right = _copy(p->right, node);
+		node->left = _copy(p->left, node, thatNIL);
+		node->right = _copy(p->right, node, thatNIL);
 		node->parent = q;
+		return node;
 	}
+
+	return NIL;
 }
 
 template<typename T>
@@ -357,24 +390,24 @@ void DS_Set<T>::_transplant(SET_NODE<T>* p, SET_NODE<T>* q)
 template<typename T>
 SET_NODE<T>* DS_Set<T>::Cut(SET_NODE<T>* p)
 {
-	if (p == NULL)
-		return NULL;
+	if (p == NIL)
+		return NIL;
 
-	if (p->parent != NULL)
+	if (p->parent != NIL)
 	{
-		_Node * parent = p->parent;
+		SET_NODE<T>* parent = p->parent;
 
 		if (parent->left == p)
-			parent->left = NULL;
+			parent->left = NIL;
 		else if (parent->right == p)
-			parent->right = NULL;
+			parent->right = NIL;
 	}
 
 	return p;
 }
 
 template<typename T>
-typename SET_NODE<T>* DS_Set<T>::_search(SET_NODE<T>* p, const T data)
+typename SET_NODE<T>* DS_Set<T>::_search(SET_NODE<T>* p, const T& data)
 {
 	SET_NODE<T>* q = p;
 	while (p)
@@ -434,7 +467,7 @@ void DS_Set<T>::_adjust(SET_NODE<T>* t)
 {
 	while (t->parent->color == RB_RED)
 	{
-		if(t->parent = t->parent->parent->left)
+		if(t->parent == t->parent->parent->left)
 		{
 			if (t->parent->parent->right->color == RB_RED)
 			{
@@ -467,7 +500,7 @@ void DS_Set<T>::_adjust(SET_NODE<T>* t)
 			}
 			else if (t->parent != NIL && t->parent->parent != NIL)
 			{
-				if (t = t->parent->left)
+				if (t == t->parent->left)
 				{
 					t = t->parent;
 					_right_rotate(t);
@@ -488,7 +521,7 @@ void DS_Set<T>::_delete_adjust(SET_NODE<T>* t)
 {
 	while (t != root && t->color == RB_BLACK)
 	{
-		if (t = t->parent->left)
+		if (t == t->parent->left)
 		{
 			SET_NODE<T>* p = t->parent->right;
 
@@ -538,7 +571,7 @@ void DS_Set<T>::_delete_adjust(SET_NODE<T>* t)
 			if (p->color == RB_BLACK && p->left->color == RB_BLACK && p->right->color == RB_BLACK)
 			{
 				p->color = RB_RED;
-				t = t->parent
+				t = t->parent;
 			}
 			else
 			{
@@ -566,14 +599,14 @@ void DS_Set<T>::_delete_adjust(SET_NODE<T>* t)
 template<typename T>
 typename SET_NODE<T>* DS_Set<T>::_predecessor(T data)
 {
-	SET_NODE<T>* node = _search(data);
+	SET_NODE<T>* node = _search(root, data);
 
 	if (node == NIL)
 	{
 		return NULL;
 	}
 
-	if (node->left)
+	if (node->left != NIL)
 		return _maximum(node->left);
 
 	SET_NODE<T>* p = node->parent;
@@ -590,14 +623,14 @@ typename SET_NODE<T>* DS_Set<T>::_predecessor(T data)
 template<typename T>
 typename SET_NODE<T>* DS_Set<T>::_successor(T data)
 {
-	SET_NODE<T>* node = _search(data);
+	SET_NODE<T>* node = _search(root, data);
 
 	if (node == NIL)
 	{
 		return NULL;
 	}
 
-	if (node->right)
+	if (node->right != NIL)
 		return _minimum(node->right);
 
 	SET_NODE<T>* p = node->parent;
@@ -614,7 +647,7 @@ typename SET_NODE<T>* DS_Set<T>::_successor(T data)
 template<typename T>
 typename SET_NODE<T>* DS_Set<T>::_maximum(SET_NODE<T>* p)
 {
-	while (p->right)
+	while (p != NIL && p->right != NIL)
 	{
 		p = p->right;
 	}
@@ -625,7 +658,7 @@ typename SET_NODE<T>* DS_Set<T>::_maximum(SET_NODE<T>* p)
 template<typename T>
 typename SET_NODE<T>* DS_Set<T>::_minimum(SET_NODE<T>* p)
 {
-	while (p->left)
+	while (p != NIL && p->left != NIL)
 	{
 		p = p->left;
 	}
@@ -633,10 +666,206 @@ typename SET_NODE<T>* DS_Set<T>::_minimum(SET_NODE<T>* p)
 	return p == NIL ? NULL : p;
 }
 
+template<typename T>
+DS_Set<T>::iterator::iterator()
+{
+	p = NULL;
+	cur = NULL;
+}
+
+template<typename T>
+bool DS_Set<T>::iterator::operator!=(const iterator & that)
+{
+	return p != that.p || cur != that.cur;
+}
+
+template<typename T>
+typename DS_Set<T>::iterator & DS_Set<T>::iterator::operator++()
+{
+	assert(p && cur);
+	SET_NODE<T>* next = p->_successor(cur->data);
+	cur = next;
+	return *this;
+}
+
+template<typename T>
+typename DS_Set<T>::iterator DS_Set<T>::iterator::operator++(int)
+{
+	assert(p && cur);
+	SET_NODE<T>* next = p->_successor(cur->data);
+	iterator it = *this;
+	cur = next;
+	return it;
+}
+
+template<typename T>
+typename DS_Set<T>::iterator & DS_Set<T>::iterator::operator--()
+{
+	assert(p && cur);
+	SET_NODE<T>* pre = p->_predecessor(cur->data);
+	cur = pre;
+	return *this;
+}
+
+template<typename T>
+typename DS_Set<T>::iterator DS_Set<T>::iterator::operator--(int)
+{
+	assert(p && cur);
+	SET_NODE<T>* pre = p->_predecessor(cur->data);
+	iterator it = *this;
+	cur = pre;
+	return it;
+}
+
+template<typename T>
+T & DS_Set<T>::iterator::operator*()
+{
+	assert(p && cur);
+	return cur->data;
+}
+
+template<typename T>
+T * DS_Set<T>::iterator::operator->()
+{
+	assert(p && cur);
+	return &(cur->data);
+}
+
+template<typename T>
+DS_Set<T>::reverse_iterator::reverse_iterator()
+{
+	p = NULL;
+	cur = NULL;
+}
+
+template<typename T>
+bool DS_Set<T>::reverse_iterator::operator!=(const reverse_iterator & that)
+{
+	return p != that.p || cur != that.cur;
+}
+
+template<typename T>
+typename DS_Set<T>::reverse_iterator & DS_Set<T>::reverse_iterator::operator++()
+{
+	assert(p && cur);
+	SET_NODE<T>* pre = p->_predecessor(cur->data);
+	cur = pre;
+	return *this;
+}
+
+template<typename T>
+typename DS_Set<T>::reverse_iterator DS_Set<T>::reverse_iterator::operator++(int)
+{
+	assert(p && cur);
+	SET_NODE<T>* pre = p->_predecessor(cur->data);
+	reverse_iterator it = *this;
+	cur = pre;
+	return it;
+}
+
+template<typename T>
+typename DS_Set<T>::reverse_iterator & DS_Set<T>::reverse_iterator::operator--()
+{
+	assert(p && cur);
+	SET_NODE<T>* next = p->_successor(cur->data);
+	cur = next;
+	return *this;
+}
+
+template<typename T>
+typename DS_Set<T>::reverse_iterator DS_Set<T>::reverse_iterator::operator--(int)
+{
+	assert(p && cur);
+	SET_NODE<T>* next = p->_successor(cur->data);
+	reverse_iterator it = *this;
+	cur = next;
+	return it;
+}
+
+template<typename T>
+T & DS_Set<T>::reverse_iterator::operator*()
+{
+	assert(p && cur);
+	return cur->data;
+}
+
+template<typename T>
+T * DS_Set<T>::reverse_iterator::operator->()
+{
+	assert(p && cur);
+	return &(cur->data);
+}
 
 int main()
 {
 	DS_Set<int> ds_set1;
 	std::set<int> set1;
+
+	int datas[10] = { 3,2,1,4,5,6,10,9,8,7 };
+
+	for (int i = 0; i < 10; ++i)
+	{
+		set1.insert(datas[i]);
+		ds_set1.insert(datas[i]);
+	}
+
+	printf("std::set: ");
+	for (std::set<int>::iterator it = set1.begin(); it != set1.end(); ++it)
+	{
+		printf("%d ", *it);
+	}
+
+	printf("\n");
+
+	printf("DS_Set: ");
+	for (DS_Set<int>::iterator it = ds_set1.begin(); it != ds_set1.end(); ++it)
+	{
+		printf("%d ", *it);
+	}
+
+	printf("\n");
+
+	if (set1.find(5) != set1.end())
+	{
+		printf("std::set: 5 exist.\n");
+	}
+	else
+	{
+		printf("std::set: 5 not exist.\n");
+	}
+
+	if (ds_set1.find(5) != ds_set1.end())
+	{
+		printf("DS_Set: 5 exist.\n");
+	}
+	else
+	{
+		printf("DS_Set: 5 not exist.\n");
+	}
+
+	DS_Set<int> ds_set2 = ds_set1;
+	std::set<int> set2 = set1;
+
+	set2.erase(5);
+	ds_set2.erase(5);
+
+	if (set2.find(5) != set2.end())
+	{
+		printf("std::set: 5 exist.\n");
+	}
+	else
+	{
+		printf("std::set: 5 not exist.\n");
+	}
+
+	if (ds_set2.find(5) != ds_set2.end())
+	{
+		printf("DS_Set: 5 exist.\n");
+	}
+	else
+	{
+		printf("DS_Set: 5 not exist.\n");
+	}
+	
 	return 0;
 }
