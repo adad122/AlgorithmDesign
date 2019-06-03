@@ -467,7 +467,7 @@ bool RBTree<T>::Delete(T x)
 		}
 		else if(node->left != NIL || node->right != NIL)
 		{
-			q = p = node->left ? node->left : node->right;
+			q = p = node->left != NIL ? node->left : node->right;
 			_transplant(node, p);
 		}
 

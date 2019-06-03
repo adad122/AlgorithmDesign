@@ -168,7 +168,7 @@ typename DS_Set<T>::iterator DS_Set<T>::end()
 template<typename T>
 typename DS_Set<T>::reverse_iterator DS_Set<T>::rbegin()
 {
-	iterator it;
+	reverse_iterator it;
 	it.p = this;
 	it.cur = _maximum(root);
 	return it;
@@ -177,7 +177,7 @@ typename DS_Set<T>::reverse_iterator DS_Set<T>::rbegin()
 template<typename T>
 typename DS_Set<T>::reverse_iterator DS_Set<T>::rend()
 {
-	iterator it;
+	reverse_iterator it;
 	it.p = this;
 	it.cur = NULL;
 	return it;
@@ -266,7 +266,7 @@ typename DS_Set<T>::iterator DS_Set<T>::erase(const T & val)
 	{
 		SET_NODE<T>* t = p->right;
 
-		while (t->left)
+		while (t->left != NIL)
 		{
 			t = t->left;
 		}
@@ -291,9 +291,9 @@ typename DS_Set<T>::iterator DS_Set<T>::erase(const T & val)
 
 		t->color = p->color;
 	}
-	else
+	else if (p->left != NIL || p->right != NIL)
 	{
-		q = p->left ? p->left : p->right;
+		q = p->left != NIL ? p->left : p->right;
 		_transplant(p, q);
 	}
 
@@ -410,7 +410,7 @@ template<typename T>
 typename SET_NODE<T>* DS_Set<T>::_search(SET_NODE<T>* p, const T& data)
 {
 	SET_NODE<T>* q = p;
-	while (p)
+	while (p != NIL)
 	{
 		q = p;
 		if (data > p->data)
@@ -614,7 +614,7 @@ typename SET_NODE<T>* DS_Set<T>::_predecessor(T data)
 	while(p != NIL && node == p->left)
 	{
 		node = p;
-		p = p->parent
+		p = p->parent;
 	}
 
 	return p != NIL ? p : NULL;
